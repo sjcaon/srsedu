@@ -1,7 +1,4 @@
-import {
-  LayoutDashboard, Users, GraduationCap, UserCheck, CalendarCheck,
-  ClipboardList, FileText, Clock, Wallet, Mail, Shield, Award, LogOut,
-} from 'lucide-react';
+import { LayoutDashboard, ClipboardList, CalendarCheck, Wallet, FileText, Mail, LogOut, GraduationCap } from 'lucide-react';
 import { NavLink } from '@/components/NavLink';
 import { useAuth } from '@/hooks/useAuth';
 import {
@@ -12,20 +9,14 @@ import { Button } from '@/components/ui/button';
 
 const menuItems = [
   { title: 'Overview', url: '/dashboard', icon: LayoutDashboard },
-  { title: 'Teachers', url: '/dashboard/teachers', icon: Users },
-  { title: 'Students', url: '/dashboard/students', icon: GraduationCap },
-  { title: 'Guardians', url: '/dashboard/guardians', icon: UserCheck },
+  { title: 'Results', url: '/dashboard/results', icon: ClipboardList },
   { title: 'Attendance', url: '/dashboard/attendance', icon: CalendarCheck },
-  { title: 'Exams', url: '/dashboard/exams', icon: ClipboardList },
-  { title: 'Results', url: '/dashboard/results', icon: Award },
-  { title: 'Routines', url: '/dashboard/routines', icon: Clock },
   { title: 'Fees', url: '/dashboard/fees', icon: Wallet },
   { title: 'Notices', url: '/dashboard/notices', icon: FileText },
   { title: 'Messages', url: '/dashboard/messages', icon: Mail },
-  { title: 'Roles', url: '/dashboard/roles', icon: Shield },
 ];
 
-export default function AdminSidebar() {
+export default function GuardianSidebar() {
   const { state } = useSidebar();
   const collapsed = state === 'collapsed';
   const { signOut, profile } = useAuth();
@@ -40,26 +31,19 @@ export default function AdminSidebar() {
           {!collapsed && (
             <div className="overflow-hidden">
               <p className="text-sm font-display font-bold text-sidebar-foreground truncate">SRS Academic</p>
-              <p className="text-xs text-sidebar-foreground/60 truncate">Management System</p>
+              <p className="text-xs text-sidebar-foreground/60 truncate">Guardian Panel</p>
             </div>
           )}
         </div>
-
         <SidebarGroup>
-          <SidebarGroupLabel>Management</SidebarGroupLabel>
+          <SidebarGroupLabel>My Wards</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {menuItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild>
-                    <NavLink
-                      to={item.url}
-                      end={item.url === '/dashboard'}
-                      className="hover:bg-sidebar-accent/50"
-                      activeClassName="bg-sidebar-accent text-sidebar-primary font-medium"
-                    >
-                      <item.icon className="mr-2 h-4 w-4" />
-                      {!collapsed && <span>{item.title}</span>}
+                    <NavLink to={item.url} end={item.url === '/dashboard'} className="hover:bg-sidebar-accent/50" activeClassName="bg-sidebar-accent text-sidebar-primary font-medium">
+                      <item.icon className="mr-2 h-4 w-4" />{!collapsed && <span>{item.title}</span>}
                     </NavLink>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -68,21 +52,10 @@ export default function AdminSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
-
       <SidebarFooter className="p-3">
-        {!collapsed && profile && (
-          <p className="text-xs text-sidebar-foreground/60 truncate mb-2 px-1">
-            {profile.full_name || profile.email}
-          </p>
-        )}
-        <Button
-          variant="ghost"
-          size={collapsed ? 'icon' : 'default'}
-          className="w-full text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent"
-          onClick={signOut}
-        >
-          <LogOut className="h-4 w-4" />
-          {!collapsed && <span className="ml-2">Sign Out</span>}
+        {!collapsed && profile && <p className="text-xs text-sidebar-foreground/60 truncate mb-2 px-1">{profile.full_name || profile.email}</p>}
+        <Button variant="ghost" size={collapsed ? 'icon' : 'default'} className="w-full text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent" onClick={signOut}>
+          <LogOut className="h-4 w-4" />{!collapsed && <span className="ml-2">Sign Out</span>}
         </Button>
       </SidebarFooter>
     </Sidebar>

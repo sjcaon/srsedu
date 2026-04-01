@@ -106,6 +106,78 @@ export type Database = {
         }
         Relationships: []
       }
+      fee_payments: {
+        Row: {
+          amount_paid: number
+          created_at: string
+          fee_id: string
+          id: string
+          payment_date: string
+          status: string
+          student_id: string
+        }
+        Insert: {
+          amount_paid?: number
+          created_at?: string
+          fee_id: string
+          id?: string
+          payment_date?: string
+          status?: string
+          student_id: string
+        }
+        Update: {
+          amount_paid?: number
+          created_at?: string
+          fee_id?: string
+          id?: string
+          payment_date?: string
+          status?: string
+          student_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fee_payments_fee_id_fkey"
+            columns: ["fee_id"]
+            isOneToOne: false
+            referencedRelation: "fee_structures"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fee_payments_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      fee_structures: {
+        Row: {
+          amount: number
+          class: string
+          created_at: string
+          due_date: string | null
+          fee_type: string
+          id: string
+        }
+        Insert: {
+          amount?: number
+          class: string
+          created_at?: string
+          due_date?: string | null
+          fee_type: string
+          id?: string
+        }
+        Update: {
+          amount?: number
+          class?: string
+          created_at?: string
+          due_date?: string | null
+          fee_type?: string
+          id?: string
+        }
+        Relationships: []
+      }
       guardians: {
         Row: {
           created_at: string
@@ -139,6 +211,42 @@ export type Database = {
           occupation?: string | null
           relation?: string | null
           user_id?: string | null
+        }
+        Relationships: []
+      }
+      messages: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          read_status: boolean
+          receiver_id: string
+          receiver_role: string
+          sender_id: string
+          sender_role: string
+          subject: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          read_status?: boolean
+          receiver_id: string
+          receiver_role: string
+          sender_id: string
+          sender_role: string
+          subject: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          read_status?: boolean
+          receiver_id?: string
+          receiver_role?: string
+          sender_id?: string
+          sender_role?: string
+          subject?: string
         }
         Relationships: []
       }
@@ -240,6 +348,50 @@ export type Database = {
             columns: ["student_id"]
             isOneToOne: false
             referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      routines: {
+        Row: {
+          class: string
+          created_at: string
+          day_of_week: string
+          end_time: string
+          id: string
+          period_number: number
+          start_time: string
+          subject: string
+          teacher_id: string | null
+        }
+        Insert: {
+          class: string
+          created_at?: string
+          day_of_week: string
+          end_time: string
+          id?: string
+          period_number: number
+          start_time: string
+          subject: string
+          teacher_id?: string | null
+        }
+        Update: {
+          class?: string
+          created_at?: string
+          day_of_week?: string
+          end_time?: string
+          id?: string
+          period_number?: number
+          start_time?: string
+          subject?: string
+          teacher_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "routines_teacher_id_fkey"
+            columns: ["teacher_id"]
+            isOneToOne: false
+            referencedRelation: "teachers"
             referencedColumns: ["id"]
           },
         ]

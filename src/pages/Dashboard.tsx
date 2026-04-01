@@ -1,6 +1,9 @@
 import { useAuth } from '@/hooks/useAuth';
 import { Navigate } from 'react-router-dom';
 import AdminDashboard from '@/components/dashboard/AdminDashboard';
+import TeacherDashboard from '@/components/dashboard/TeacherDashboard';
+import StudentDashboard from '@/components/dashboard/StudentDashboard';
+import GuardianDashboard from '@/components/dashboard/GuardianDashboard';
 import { Loader2 } from 'lucide-react';
 
 export default function Dashboard() {
@@ -16,14 +19,15 @@ export default function Dashboard() {
 
   if (!user) return <Navigate to="/login" replace />;
 
-  // For now, all authenticated users see admin dashboard
-  // Role-based dashboards will be added incrementally
   switch (role) {
     case 'admin':
       return <AdminDashboard />;
     case 'teacher':
+      return <TeacherDashboard />;
     case 'student':
+      return <StudentDashboard />;
     case 'guardian':
+      return <GuardianDashboard />;
     default:
       return <AdminDashboard />;
   }
