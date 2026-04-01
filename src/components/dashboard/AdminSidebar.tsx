@@ -1,26 +1,12 @@
 import {
-  LayoutDashboard,
-  Users,
-  GraduationCap,
-  UserCheck,
-  ClipboardList,
-  FileText,
-  CalendarCheck,
-  LogOut,
+  LayoutDashboard, Users, GraduationCap, UserCheck, CalendarCheck,
+  ClipboardList, FileText, Clock, Wallet, Mail, Shield, Award, LogOut,
 } from 'lucide-react';
 import { NavLink } from '@/components/NavLink';
 import { useAuth } from '@/hooks/useAuth';
 import {
-  Sidebar,
-  SidebarContent,
-  SidebarGroup,
-  SidebarGroupContent,
-  SidebarGroupLabel,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
-  SidebarFooter,
-  useSidebar,
+  Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel,
+  SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarFooter, useSidebar,
 } from '@/components/ui/sidebar';
 import { Button } from '@/components/ui/button';
 
@@ -31,7 +17,12 @@ const menuItems = [
   { title: 'Guardians', url: '/dashboard/guardians', icon: UserCheck },
   { title: 'Attendance', url: '/dashboard/attendance', icon: CalendarCheck },
   { title: 'Exams', url: '/dashboard/exams', icon: ClipboardList },
+  { title: 'Results', url: '/dashboard/results', icon: Award },
+  { title: 'Routines', url: '/dashboard/routines', icon: Clock },
+  { title: 'Fees', url: '/dashboard/fees', icon: Wallet },
   { title: 'Notices', url: '/dashboard/notices', icon: FileText },
+  { title: 'Messages', url: '/dashboard/messages', icon: Mail },
+  { title: 'Roles', url: '/dashboard/roles', icon: Shield },
 ];
 
 export default function AdminSidebar() {
