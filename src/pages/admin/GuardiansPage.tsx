@@ -22,8 +22,13 @@ export default function GuardiansPage() {
 
   const fetchGuardians = async () => {
     setLoading(true);
-    const { data } = await supabase.from('guardians').select('*').order('created_at', { ascending: false });
-    setGuardians(data ?? []);
+    const { data, error } = await supabase.from('guardians').select('*').order('created_at', { ascending: false });
+    if (error) {
+      toast({ title: 'Error', description: error.message, variant: 'destructive' });
+      setGuardians([]);
+    } else {
+      setGuardians(data ?? []);
+    }
     setLoading(false);
   };
 
@@ -44,20 +49,31 @@ export default function GuardiansPage() {
     };
 
     let error;
+    let savedGuardian: any = null;
     if (editId) {
-      ({ error } = await supabase.from('guardians').update(payload).eq('id', editId));
+      const response = await supabase.from('guardians').update(payload).eq('id', editId).select().single();
+      error = response.error;
+      savedGuardian = response.data;
     } else {
-      ({ error } = await supabase.from('guardians').insert([payload]));
+      const response = await supabase.from('guardians').insert(payload).select().single();
+      error = response.error;
+      savedGuardian = response.data;
     }
 
     if (error) {
       toast({ title: 'Error', description: error.message, variant: 'destructive' });
     } else {
+      if (savedGuardian) {
+        setGuardians((current) =>
+          editId
+            ? current.map((guardian) => (guardian.id === savedGuardian.id ? savedGuardian : guardian))
+            : [savedGuardian, ...current]
+        );
+      }
       toast({ title: editId ? 'Guardian updated!' : 'Guardian added!' });
       setDialogOpen(false);
       setForm(emptyForm);
       setEditId(null);
-      fetchGuardians();
     }
     setSaving(false);
   };
@@ -74,7 +90,10 @@ export default function GuardiansPage() {
   const handleDelete = async (id: string) => {
     const { error } = await supabase.from('guardians').delete().eq('id', id);
     if (error) toast({ title: 'Error', description: error.message, variant: 'destructive' });
-    else { toast({ title: 'Guardian deleted' }); fetchGuardians(); }
+    else {
+      setGuardians((current) => current.filter((guardian) => guardian.id !== id));
+      toast({ title: 'Guardian deleted' });
+    }
   };
 
   return (

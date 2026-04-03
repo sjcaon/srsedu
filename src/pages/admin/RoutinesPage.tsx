@@ -25,20 +25,48 @@ export default function RoutinesPage() {
   const [saving, setSaving] = useState(false);
   const { toast } = useToast();
 
+  const loadRoutines = async (className?: string) => {
+    setLoading(true);
+
+    let query = supabase.from('routines').select('*').order('day_of_week').order('period_number');
+    if (className) query = query.eq('class', className);
+
+    const [routineResponse, teacherResponse] = await Promise.all([
+      query,
+      supabase.from('teachers').select('id, full_name').order('full_name'),
+    ]);
+
+    if (routineResponse.error || teacherResponse.error) {
+      toast({
+        title: 'Error',
+        description: routineResponse.error?.message ?? teacherResponse.error?.message ?? 'Failed to load routines.',
+        variant: 'destructive',
+      });
+      setRoutines([]);
+      setTeachers([]);
+      setLoading(false);
+      return;
+    }
+
+    const teacherList = teacherResponse.data ?? [];
+    const teacherMap = new Map(teacherList.map((teacher) => [teacher.id, teacher.full_name]));
+
+    setTeachers(teacherList);
+    setRoutines(
+      (routineResponse.data ?? []).map((routine) => ({
+        ...routine,
+        teacher_name: routine.teacher_id ? teacherMap.get(routine.teacher_id) ?? null : null,
+      }))
+    );
+    setLoading(false);
+  };
+
   useEffect(() => {
-    supabase.from('teachers').select('id, full_name').then(({ data }) => setTeachers(data ?? []));
+    void loadRoutines(selectedClass);
   }, []);
 
   useEffect(() => {
-    const fetchRoutines = async () => {
-      setLoading(true);
-      let query = supabase.from('routines').select('*, teachers(full_name)').order('day_of_week').order('period_number');
-      if (selectedClass) query = query.eq('class', selectedClass);
-      const { data } = await query;
-      setRoutines(data ?? []);
-      setLoading(false);
-    };
-    fetchRoutines();
+    void loadRoutines(selectedClass);
   }, [selectedClass]);
 
   const handleChange = (key: string, value: string) => setForm((f) => ({ ...f, [key]: value }));
@@ -61,10 +89,9 @@ export default function RoutinesPage() {
       toast({ title: 'Routine added!' });
       setDialogOpen(false);
       setForm(emptyForm);
-      // Refresh
-      const { data } = await supabase.from('routines').select('*, teachers(full_name)').order('day_of_week').order('period_number').eq('class', selectedClass || form.class);
-      setRoutines(data ?? []);
+      const nextClass = selectedClass || form.class;
       if (!selectedClass) setSelectedClass(form.class);
+      await loadRoutines(nextClass);
     }
     setSaving(false);
   };
@@ -166,7 +193,7 @@ export default function RoutinesPage() {
                         <TableCell className="font-mono">{r.period_number}</TableCell>
                         <TableCell>{r.start_time?.slice(0, 5)} - {r.end_time?.slice(0, 5)}</TableCell>
                         <TableCell className="font-medium">{r.subject}</TableCell>
-                        <TableCell>{r.teachers?.full_name || '—'}</TableCell>
+                        <TableCell>{r.teacher_name || '—'}</TableCell>
                         <TableCell>
                           <Button variant="ghost" size="icon" onClick={() => handleDelete(r.id)}>
                             <Trash2 className="h-4 w-4 text-destructive" />

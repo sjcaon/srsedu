@@ -72,9 +72,7 @@ export default function ResultsPage() {
         grade: calcGrade(Number(m), selectedExamObj.max_marks),
       }));
 
-    // Delete existing results for this exam then insert fresh
-    await supabase.from('results').delete().eq('exam_id', selectedExam);
-    const { error } = await supabase.from('results').insert(records);
+    const { error } = await supabase.from('results').upsert(records, { onConflict: 'student_id,exam_id' });
     if (error) toast({ title: 'Error', description: error.message, variant: 'destructive' });
     else toast({ title: 'Results saved!' });
     setSaving(false);

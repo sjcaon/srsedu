@@ -31,12 +31,37 @@ export default function FeesPage() {
     setLoading(true);
     const [fs, fp, st] = await Promise.all([
       supabase.from('fee_structures').select('*').order('class').order('fee_type'),
-      supabase.from('fee_payments').select('*, students(full_name, roll_number), fee_structures(fee_type, class, amount)').order('payment_date', { ascending: false }),
+      supabase.from('fee_payments').select('*').order('payment_date', { ascending: false }),
       supabase.from('students').select('id, full_name, roll_number, current_class').order('roll_number'),
     ]);
-    setStructures(fs.data ?? []);
-    setPayments(fp.data ?? []);
-    setStudents(st.data ?? []);
+
+    if (fs.error || fp.error || st.error) {
+      toast({
+        title: 'Error',
+        description: fs.error?.message ?? fp.error?.message ?? st.error?.message ?? 'Failed to load fee data.',
+        variant: 'destructive',
+      });
+      setStructures([]);
+      setPayments([]);
+      setStudents([]);
+      setLoading(false);
+      return;
+    }
+
+    const structuresData = fs.data ?? [];
+    const studentsData = st.data ?? [];
+    const structureMap = new Map(structuresData.map((item) => [item.id, item]));
+    const studentMap = new Map(studentsData.map((item) => [item.id, item]));
+
+    setStructures(structuresData);
+    setStudents(studentsData);
+    setPayments(
+      (fp.data ?? []).map((payment) => ({
+        ...payment,
+        students: studentMap.get(payment.student_id) ?? null,
+        fee_structures: structureMap.get(payment.fee_id) ?? null,
+      }))
+    );
     setLoading(false);
   };
 

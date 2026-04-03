@@ -14,7 +14,7 @@ import { Plus, Loader2, Mail, MailOpen } from 'lucide-react';
 
 export default function MessagesPage() {
   const [messages, setMessages] = useState<any[]>([]);
-  const [profiles, setProfiles] = useState<any[]>([]);
+  const [directory, setDirectory] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -24,31 +24,52 @@ export default function MessagesPage() {
 
   const fetchData = async () => {
     setLoading(true);
-    const [m, p] = await Promise.all([
+    const [m, d] = await Promise.all([
       supabase.from('messages').select('*').order('created_at', { ascending: false }),
-      supabase.from('profiles').select('user_id, full_name, email'),
+      supabase.rpc('get_message_directory'),
     ]);
+
+    if (m.error || d.error) {
+      toast({
+        title: 'Error',
+        description: m.error?.message ?? d.error?.message ?? 'Failed to load messages.',
+        variant: 'destructive',
+      });
+      setMessages([]);
+      setDirectory([]);
+      setLoading(false);
+      return;
+    }
+
     setMessages(m.data ?? []);
-    setProfiles(p.data ?? []);
+    setDirectory((d.data ?? []).filter((entry: any) => entry.role));
     setLoading(false);
   };
 
   useEffect(() => { fetchData(); }, []);
 
   const getProfileName = (userId: string) => {
-    const p = profiles.find((pr) => pr.user_id === userId);
-    return p?.full_name || p?.email || userId;
+    if (userId === user?.id) return 'You';
+    const entry = directory.find((item) => item.user_id === userId);
+    return entry?.full_name || userId;
   };
 
   const handleSend = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return;
+
+    const recipient = directory.find((item) => item.user_id === form.receiver_id);
+    if (!recipient) {
+      toast({ title: 'Error', description: 'Please choose a valid recipient.', variant: 'destructive' });
+      return;
+    }
+
     setSaving(true);
     const { error } = await supabase.from('messages').insert([{
       sender_id: user.id,
       sender_role: role || 'admin',
       receiver_id: form.receiver_id,
-      receiver_role: 'user',
+      receiver_role: recipient.role,
       subject: form.subject,
       content: form.content,
     }]);
@@ -81,8 +102,10 @@ export default function MessagesPage() {
                 <Select value={form.receiver_id} onValueChange={(v) => setForm((f) => ({ ...f, receiver_id: v }))}>
                   <SelectTrigger><SelectValue placeholder="Select recipient" /></SelectTrigger>
                   <SelectContent>
-                    {profiles.filter((p) => p.user_id !== user?.id).map((p) => (
-                      <SelectItem key={p.user_id} value={p.user_id}>{p.full_name || p.email}</SelectItem>
+                    {directory.map((entry) => (
+                      <SelectItem key={entry.user_id} value={entry.user_id}>
+                        {entry.full_name} ({entry.role})
+                      </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
