@@ -30,11 +30,32 @@ export default function StudentsPage() {
   const fetchData = async () => {
     setLoading(true);
     const [s, g] = await Promise.all([
-      supabase.from('students').select('*, guardians(name)').order('created_at', { ascending: false }),
-      supabase.from('guardians').select('id, name'),
+      supabase.from('students').select('*').order('created_at', { ascending: false }),
+      supabase.from('guardians').select('id, name').order('name'),
     ]);
-    setStudents(s.data ?? []);
-    setGuardians(g.data ?? []);
+
+    if (s.error || g.error) {
+      toast({
+        title: 'Error',
+        description: s.error?.message ?? g.error?.message ?? 'Failed to load students.',
+        variant: 'destructive',
+      });
+      setStudents([]);
+      setGuardians([]);
+      setLoading(false);
+      return;
+    }
+
+    const guardiansList = g.data ?? [];
+    const guardianMap = new Map(guardiansList.map((guardian) => [guardian.id, guardian.name]));
+
+    setStudents(
+      (s.data ?? []).map((student) => ({
+        ...student,
+        guardian_name: student.guardian_id ? guardianMap.get(student.guardian_id) ?? null : null,
+      }))
+    );
+    setGuardians(guardiansList);
     setLoading(false);
   };
 
@@ -219,7 +240,7 @@ export default function StudentsPage() {
                       <TableCell className="font-medium">{s.full_name}</TableCell>
                       <TableCell>{s.current_class}</TableCell>
                       <TableCell>{s.student_group}</TableCell>
-                      <TableCell>{s.guardians?.name}</TableCell>
+                      <TableCell>{s.guardian_name}</TableCell>
                       <TableCell>{s.mobile}</TableCell>
                       <TableCell>
                         <div className="flex gap-1">

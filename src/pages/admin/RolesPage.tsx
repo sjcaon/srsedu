@@ -11,10 +11,10 @@ import { Loader2, Shield } from 'lucide-react';
 const roles = ['admin', 'teacher', 'student', 'guardian'] as const;
 
 const roleColors: Record<string, string> = {
-  admin: 'bg-destructive/10 text-destructive',
-  teacher: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300',
-  student: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300',
-  guardian: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300',
+  admin: 'border-destructive/20 bg-destructive/10 text-destructive',
+  teacher: 'border-secondary bg-secondary text-secondary-foreground',
+  student: 'border-accent bg-accent text-accent-foreground',
+  guardian: 'border-muted bg-muted text-muted-foreground',
 };
 
 export default function RolesPage() {
@@ -31,6 +31,19 @@ export default function RolesPage() {
       supabase.from('profiles').select('*').order('created_at', { ascending: false }),
       supabase.from('user_roles').select('*'),
     ]);
+
+    if (p.error || r.error) {
+      toast({
+        title: 'Error',
+        description: p.error?.message ?? r.error?.message ?? 'Failed to load role data.',
+        variant: 'destructive',
+      });
+      setProfiles([]);
+      setUserRoles({});
+      setLoading(false);
+      return;
+    }
+
     setProfiles(p.data ?? []);
     const roleMap: Record<string, string> = {};
     (r.data ?? []).forEach((ur) => { roleMap[ur.user_id] = ur.role; });
@@ -42,31 +55,18 @@ export default function RolesPage() {
 
   const handleRoleChange = async (userId: string, newRole: string) => {
     setSavingId(userId);
-    const currentRole = userRoles[userId];
-    if (currentRole) {
-      // Update existing role
-      const { error } = await supabase
-        .from('user_roles')
-        .update({ role: newRole as any })
-        .eq('user_id', userId);
-      if (error) {
-        toast({ title: 'Error', description: error.message, variant: 'destructive' });
-      } else {
-        toast({ title: 'Role updated!' });
-        setUserRoles((prev) => ({ ...prev, [userId]: newRole }));
-      }
+    const { data, error } = await supabase.rpc('set_user_role', {
+      _user_id: userId,
+      _role: newRole as any,
+    });
+
+    if (error) {
+      toast({ title: 'Error', description: error.message, variant: 'destructive' });
     } else {
-      // Insert new role
-      const { error } = await supabase
-        .from('user_roles')
-        .insert([{ user_id: userId, role: newRole as any }]);
-      if (error) {
-        toast({ title: 'Error', description: error.message, variant: 'destructive' });
-      } else {
-        toast({ title: 'Role assigned!' });
-        setUserRoles((prev) => ({ ...prev, [userId]: newRole }));
-      }
+      toast({ title: userRoles[userId] ? 'Role updated!' : 'Role assigned!' });
+      setUserRoles((prev) => ({ ...prev, [userId]: (data as string) ?? newRole }));
     }
+
     setSavingId(null);
   };
 

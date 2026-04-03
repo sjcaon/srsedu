@@ -43,8 +43,13 @@ export default function TeachersPage() {
 
   const fetchTeachers = async () => {
     setLoading(true);
-    const { data } = await supabase.from('teachers').select('*').order('created_at', { ascending: false });
-    setTeachers(data ?? []);
+    const { data, error } = await supabase.from('teachers').select('*').order('created_at', { ascending: false });
+    if (error) {
+      toast({ title: 'Error', description: error.message, variant: 'destructive' });
+      setTeachers([]);
+    } else {
+      setTeachers(data ?? []);
+    }
     setLoading(false);
   };
 
@@ -71,20 +76,31 @@ export default function TeachersPage() {
     };
 
     let error;
+    let savedTeacher: Teacher | null = null;
     if (editId) {
-      ({ error } = await supabase.from('teachers').update(payload).eq('id', editId));
+      const response = await supabase.from('teachers').update(payload).eq('id', editId).select().single();
+      error = response.error;
+      savedTeacher = response.data;
     } else {
-      ({ error } = await supabase.from('teachers').insert([payload]));
+      const response = await supabase.from('teachers').insert(payload).select().single();
+      error = response.error;
+      savedTeacher = response.data;
     }
 
     if (error) {
       toast({ title: 'Error', description: error.message, variant: 'destructive' });
     } else {
+      if (savedTeacher) {
+        setTeachers((current) =>
+          editId
+            ? current.map((teacher) => (teacher.id === savedTeacher!.id ? savedTeacher! : teacher))
+            : [savedTeacher!, ...current]
+        );
+      }
       toast({ title: editId ? 'Teacher updated!' : 'Teacher added!' });
       setDialogOpen(false);
       setForm(emptyForm);
       setEditId(null);
-      fetchTeachers();
     }
     setSaving(false);
   };
@@ -113,8 +129,8 @@ export default function TeachersPage() {
     if (error) {
       toast({ title: 'Error', description: error.message, variant: 'destructive' });
     } else {
+      setTeachers((current) => current.filter((teacher) => teacher.id !== id));
       toast({ title: 'Teacher deleted' });
-      fetchTeachers();
     }
   };
 
