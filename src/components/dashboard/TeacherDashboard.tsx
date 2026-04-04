@@ -6,6 +6,7 @@ import TeacherAttendance from '@/pages/teacher/TeacherAttendance';
 import TeacherResults from '@/pages/teacher/TeacherResults';
 import TeacherRoutine from '@/pages/teacher/TeacherRoutine';
 import TeacherMessages from '@/pages/teacher/TeacherMessages';
+import StudentNotices from '@/pages/student/StudentNotices';
 
 export default function TeacherDashboard() {
   return (
