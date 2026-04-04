@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import { createContext, useContext, useEffect, useState, useRef, ReactNode } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import type { User, Session } from '@supabase/supabase-js';
 
@@ -24,6 +24,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [role, setRole] = useState<AppRole | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
+  const syncingRef = useRef(false);
 
   const fetchUserRole = async (userId: string) => {
     const { data: existingRole, error } = await supabase.rpc('get_user_role', { _user_id: userId });
@@ -56,53 +57,44 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       .eq('user_id', sessionUser.id)
       .maybeSingle();
 
-    if (error) throw error;
-
-    if (!data) {
-      const { data: createdProfile, error: createError } = await supabase
-        .from('profiles')
-        .insert({
-          user_id: sessionUser.id,
-          full_name: fallbackProfile.full_name,
-          email: fallbackProfile.email,
-        })
-        .select('full_name, email')
-        .single();
-
-      if (!createError && createdProfile) {
-        setProfile(createdProfile);
-        return createdProfile;
-      }
-
+    if (error) {
+      console.error('Failed to fetch profile', error);
       setProfile(fallbackProfile);
       return fallbackProfile;
     }
 
-    const needsUpdate =
-      (!data.full_name && fallbackProfile.full_name) || (!data.email && fallbackProfile.email);
-
-    if (needsUpdate) {
-      const { data: updatedProfile, error: updateError } = await supabase
-        .from('profiles')
-        .update({
-          full_name: data.full_name || fallbackProfile.full_name,
-          email: data.email || fallbackProfile.email,
-        })
-        .eq('user_id', sessionUser.id)
-        .select('full_name, email')
-        .single();
-
-      if (!updateError && updatedProfile) {
-        setProfile(updatedProfile);
-        return updatedProfile;
-      }
+    if (data) {
+      setProfile(data);
+      return data;
     }
 
-    setProfile(data);
-    return data;
+    // Profile doesn't exist — try to create once (trigger should handle this, but fallback)
+    const { data: createdProfile, error: createError } = await supabase
+      .from('profiles')
+      .insert({
+        user_id: sessionUser.id,
+        full_name: fallbackProfile.full_name,
+        email: fallbackProfile.email,
+      })
+      .select('full_name, email')
+      .single();
+
+    if (!createError && createdProfile) {
+      setProfile(createdProfile);
+      return createdProfile;
+    }
+
+    // If insert also fails (RLS), just use fallback — don't retry infinitely
+    console.warn('Could not create profile, using fallback', createError?.message);
+    setProfile(fallbackProfile);
+    return fallbackProfile;
   };
 
   const syncSession = async (nextSession: Session | null) => {
+    // Prevent concurrent syncs
+    if (syncingRef.current) return;
+    syncingRef.current = true;
+
     setSession(nextSession);
     setUser(nextSession?.user ?? null);
 
@@ -110,6 +102,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setRole(null);
       setProfile(null);
       setLoading(false);
+      syncingRef.current = false;
       return;
     }
 
@@ -120,24 +113,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setRole(null);
     } finally {
       setLoading(false);
+      syncingRef.current = false;
     }
   };
 
   useEffect(() => {
+    let mounted = true;
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (_event, session) => {
+        if (!mounted) return;
         setLoading(true);
         setTimeout(() => {
-          void syncSession(session);
+          if (mounted) void syncSession(session);
         }, 0);
       }
     );
 
     supabase.auth.getSession().then(({ data: { session } }) => {
-      void syncSession(session);
+      if (mounted) void syncSession(session);
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
   }, []);
 
   const signIn = async (email: string, password: string) => {
@@ -164,7 +164,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signOut = async () => {
     const { error } = await supabase.auth.signOut();
     if (error) throw error;
-
     setUser(null);
     setSession(null);
     setRole(null);
