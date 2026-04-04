@@ -24,6 +24,7 @@ export default function TeacherDashboard() {
               <Route path="attendance" element={<TeacherAttendance />} />
               <Route path="results" element={<TeacherResults />} />
               <Route path="routine" element={<TeacherRoutine />} />
+              <Route path="notices" element={<StudentNotices />} />
               <Route path="messages" element={<TeacherMessages />} />
             </Routes>
           </main>
