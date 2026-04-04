@@ -6,6 +6,7 @@ import TeacherAttendance from '@/pages/teacher/TeacherAttendance';
 import TeacherResults from '@/pages/teacher/TeacherResults';
 import TeacherRoutine from '@/pages/teacher/TeacherRoutine';
 import TeacherMessages from '@/pages/teacher/TeacherMessages';
+import StudentNotices from '@/pages/student/StudentNotices';
 
 export default function TeacherDashboard() {
   return (
@@ -23,6 +24,7 @@ export default function TeacherDashboard() {
               <Route path="attendance" element={<TeacherAttendance />} />
               <Route path="results" element={<TeacherResults />} />
               <Route path="routine" element={<TeacherRoutine />} />
+              <Route path="notices" element={<StudentNotices />} />
               <Route path="messages" element={<TeacherMessages />} />
             </Routes>
           </main>
