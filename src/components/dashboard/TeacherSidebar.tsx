@@ -1,4 +1,4 @@
-import { LayoutDashboard, CalendarCheck, ClipboardList, Clock, Mail, LogOut } from 'lucide-react';
+import { LayoutDashboard, CalendarCheck, ClipboardList, Clock, FileText, Mail, LogOut } from 'lucide-react';
 import { NavLink } from '@/components/NavLink';
 import { useAuth } from '@/hooks/useAuth';
 import {
