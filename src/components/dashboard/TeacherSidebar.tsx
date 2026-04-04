@@ -13,6 +13,7 @@ const menuItems = [
   { title: 'Attendance', url: '/dashboard/attendance', icon: CalendarCheck },
   { title: 'Results', url: '/dashboard/results', icon: ClipboardList },
   { title: 'Routine', url: '/dashboard/routine', icon: Clock },
+  { title: 'Notices', url: '/dashboard/notices', icon: FileText },
   { title: 'Messages', url: '/dashboard/messages', icon: Mail },
 ];
 
