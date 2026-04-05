@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Users, CalendarCheck, ClipboardList, Mail } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 export default function TeacherOverview() {
   const { user } = useAuth();
@@ -30,7 +32,12 @@ export default function TeacherOverview() {
 
   return (
     <div>
-      <h1 className="text-2xl font-display font-bold mb-6">Welcome Back!</h1>
+      <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <h1 className="text-2xl font-display font-bold">Welcome Back!</h1>
+        <Button asChild variant="outline" size="sm">
+          <Link to="/change-password">Change Password</Link>
+        </Button>
+      </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {cards.map((c) => (
           <Card key={c.label}>

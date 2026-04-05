@@ -74,20 +74,9 @@ export default function StudentsPage() {
 
   const handleChange = (key: string, value: string) => setForm((f) => ({ ...f, [key]: value }));
 
-  const generateRollNumber = async (currentClass: string) => {
-    const { count } = await supabase
-      .from('students')
-      .select('id', { count: 'exact', head: true })
-      .eq('current_class', currentClass);
-    const num = ((count ?? 0) + 1).toString().padStart(3, '0');
-    return `${currentClass.replace(/\s/g, '-').toUpperCase()}-${num}`;
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
-
-    const rollNumber = editId ? undefined : await generateRollNumber(form.current_class);
 
     const payload: any = {
       full_name: form.full_name,
@@ -100,18 +89,25 @@ export default function StudentsPage() {
       admission_date: form.admission_date || null,
       guardian_id: form.guardian_id || null,
     };
-    if (rollNumber) payload.roll_number = rollNumber;
 
     let error;
     let saved: any = null;
+    let createdLoginId: string | null = null;
     if (editId) {
       const res = await supabase.from('students').update(payload).eq('id', editId).select().single();
       error = res.error;
       saved = res.data;
     } else {
-      const res = await supabase.from('students').insert([payload]).select().single();
-      error = res.error;
-      saved = res.data;
+      const res = await supabase.functions.invoke('provision-managed-user', {
+        body: {
+          type: 'student',
+          payload,
+        },
+      });
+
+      error = res.error ?? (res.data?.error ? { message: res.data.error } : null);
+      saved = res.data?.record;
+      createdLoginId = res.data?.loginId ?? null;
     }
 
     if (error) {
@@ -127,7 +123,10 @@ export default function StudentsPage() {
           ? current.map((s) => (s.id === enriched.id ? enriched : s))
           : [enriched, ...current]
       );
-      toast({ title: editId ? 'Student updated!' : 'Student added!' });
+      toast({
+        title: editId ? 'Student updated!' : 'Student account created!',
+        description: editId ? undefined : `Student ID: ${createdLoginId} · Default password: 123456`,
+      });
       setDialogOpen(false);
       setForm(emptyForm);
       setEditId(null);

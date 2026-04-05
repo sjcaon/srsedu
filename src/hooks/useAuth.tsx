@@ -1,19 +1,25 @@
 import { createContext, useContext, useEffect, useState, useRef, ReactNode } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import type { User, Session } from '@supabase/supabase-js';
+import { buildManagedAuthEmail, resolveAdminLoginEmail } from '@/lib/managedAuth';
 
 type AppRole = 'admin' | 'teacher' | 'student' | 'guardian';
 type UserProfile = { full_name: string; email: string | null };
+type AuthLoginType = 'admin' | 'teacher' | 'student';
+type AccessContext = { loginId: string | null; isFirstLogin: boolean };
 
 interface AuthContextType {
   user: User | null;
   session: Session | null;
   role: AppRole | null;
   profile: UserProfile | null;
+  accessContext: AccessContext;
   loading: boolean;
   signIn: (email: string, password: string) => Promise<void>;
+  signInWithIdentifier: (identifier: string, password: string, loginType: AuthLoginType) => Promise<void>;
   signUp: (email: string, password: string, fullName: string) => Promise<void>;
   signOut: () => Promise<void>;
+  refreshAccessContext: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -23,6 +29,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [role, setRole] = useState<AppRole | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [accessContext, setAccessContext] = useState<AccessContext>({ loginId: null, isFirstLogin: false });
   const [loading, setLoading] = useState(true);
   const syncingRef = useRef(false);
 
@@ -90,6 +97,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return fallbackProfile;
   };
 
+  const fetchAccessContext = async () => {
+    const { data, error } = await supabase.rpc('get_current_user_access_context');
+
+    if (error) {
+      console.error('Failed to fetch access context', error);
+      setAccessContext({ loginId: null, isFirstLogin: false });
+      return { loginId: null, isFirstLogin: false };
+    }
+
+    const context = Array.isArray(data) ? data[0] : null;
+    const nextContext = {
+      loginId: context?.login_id ?? null,
+      isFirstLogin: context?.is_first_login ?? false,
+    };
+
+    setAccessContext(nextContext);
+    return nextContext;
+  };
+
   const syncSession = async (nextSession: Session | null) => {
     // Prevent concurrent syncs
     if (syncingRef.current) return;
@@ -101,16 +127,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!nextSession?.user) {
       setRole(null);
       setProfile(null);
+      setAccessContext({ loginId: null, isFirstLogin: false });
       setLoading(false);
       syncingRef.current = false;
       return;
     }
 
     try {
-      await Promise.all([fetchUserRole(nextSession.user.id), fetchProfile(nextSession.user)]);
+      await fetchUserRole(nextSession.user.id);
+      await Promise.all([fetchProfile(nextSession.user), fetchAccessContext()]);
     } catch (error) {
       console.error('Failed to sync auth state', error);
       setRole(null);
+      setAccessContext({ loginId: null, isFirstLogin: false });
     } finally {
       setLoading(false);
       syncingRef.current = false;
@@ -145,6 +174,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (error) throw error;
   };
 
+  const signInWithIdentifier = async (identifier: string, password: string, loginType: AuthLoginType) => {
+    const email = loginType === 'admin'
+      ? resolveAdminLoginEmail(identifier)
+      : buildManagedAuthEmail(identifier);
+
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) throw error;
+  };
+
   const signUp = async (email: string, password: string, fullName: string) => {
     const { data, error } = await supabase.auth.signUp({
       email,
@@ -157,7 +195,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (error) throw error;
 
     if (data.session?.user) {
-      await Promise.all([fetchUserRole(data.session.user.id), fetchProfile(data.session.user)]);
+      await fetchUserRole(data.session.user.id);
+      await Promise.all([fetchProfile(data.session.user), fetchAccessContext()]);
     }
   };
 
@@ -168,10 +207,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setSession(null);
     setRole(null);
     setProfile(null);
+    setAccessContext({ loginId: null, isFirstLogin: false });
+  };
+
+  const refreshAccessContext = async () => {
+    await fetchAccessContext();
   };
 
   return (
-    <AuthContext.Provider value={{ user, session, role, profile, loading, signIn, signUp, signOut }}>
+    <AuthContext.Provider value={{ user, session, role, profile, accessContext, loading, signIn, signInWithIdentifier, signUp, signOut, refreshAccessContext }}>
       {children}
     </AuthContext.Provider>
   );

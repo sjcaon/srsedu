@@ -406,6 +406,7 @@ export type Database = {
           full_name: string
           guardian_id: string | null
           id: string
+          is_first_login: boolean
           mobile: string | null
           parents_names: string | null
           roll_number: string | null
@@ -421,6 +422,7 @@ export type Database = {
           full_name: string
           guardian_id?: string | null
           id?: string
+          is_first_login?: boolean
           mobile?: string | null
           parents_names?: string | null
           roll_number?: string | null
@@ -436,6 +438,7 @@ export type Database = {
           full_name?: string
           guardian_id?: string | null
           id?: string
+          is_first_login?: boolean
           mobile?: string | null
           parents_names?: string | null
           roll_number?: string | null
@@ -461,6 +464,7 @@ export type Database = {
           full_name: string
           gender: string | null
           id: string
+          is_first_login: boolean
           joining_date: string | null
           mobile: string | null
           nid: string | null
@@ -478,6 +482,7 @@ export type Database = {
           full_name: string
           gender?: string | null
           id?: string
+          is_first_login?: boolean
           joining_date?: string | null
           mobile?: string | null
           nid?: string | null
@@ -495,6 +500,7 @@ export type Database = {
           full_name?: string
           gender?: string | null
           id?: string
+          is_first_login?: boolean
           joining_date?: string | null
           mobile?: string | null
           nid?: string | null
@@ -533,6 +539,15 @@ export type Database = {
         Args: { _user_id: string }
         Returns: Database["public"]["Enums"]["app_role"]
       }
+      complete_first_login: { Args: never; Returns: boolean }
+      get_current_user_access_context: {
+        Args: never
+        Returns: {
+          is_first_login: boolean
+          login_id: string
+          user_role: Database["public"]["Enums"]["app_role"]
+        }[]
+      }
       get_message_directory: {
         Args: never
         Returns: {
@@ -552,6 +567,8 @@ export type Database = {
         }
         Returns: boolean
       }
+      next_student_login_id: { Args: never; Returns: string }
+      next_teacher_login_id: { Args: never; Returns: string }
       set_user_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]

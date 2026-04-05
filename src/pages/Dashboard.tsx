@@ -8,7 +8,7 @@ import { Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 export default function Dashboard() {
-  const { user, role, loading } = useAuth();
+  const { user, role, loading, accessContext } = useAuth();
 
   if (loading) {
     return (
@@ -19,6 +19,10 @@ export default function Dashboard() {
   }
 
   if (!user) return <Navigate to="/login" replace />;
+
+  if ((role === 'student' || role === 'teacher') && accessContext.isFirstLogin) {
+    return <Navigate to="/change-password" replace />;
+  }
 
   if (!role) {
     return (
