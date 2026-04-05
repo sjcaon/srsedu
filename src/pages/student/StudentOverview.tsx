@@ -1,12 +1,14 @@
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Loader2, User, CalendarCheck, ClipboardList, CreditCard } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Button } from '@/components/ui/button';
 
 export default function StudentOverview() {
-  const { user, profile } = useAuth();
+  const { user, profile, accessContext } = useAuth();
   const [student, setStudent] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({ attendance: 0, totalDays: 0, results: 0, feesDue: 0 });
@@ -57,9 +59,14 @@ export default function StudentOverview() {
           <div>
             <h1 className="text-2xl font-display font-bold text-foreground">Welcome, {student.full_name}!</h1>
             <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted-foreground mt-1">
-              <span>ST ID: <strong className="text-foreground">{student.roll_number}</strong></span>
+              <span>ST ID: <strong className="text-foreground">{accessContext.loginId ?? student.roll_number}</strong></span>
               <span>Class: <strong className="text-foreground">{student.current_class}</strong></span>
               {student.student_group && <span>Group: <strong className="text-foreground">{student.student_group}</strong></span>}
+            </div>
+            <div className="mt-3">
+              <Button asChild variant="outline" size="sm">
+                <Link to="/change-password">Change Password</Link>
+              </Button>
             </div>
           </div>
         </CardContent>

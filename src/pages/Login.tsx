@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
-import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -11,31 +10,23 @@ import { useToast } from '@/hooks/use-toast';
 import { GraduationCap, Loader2, ShieldCheck, BookOpen, UserCheck } from 'lucide-react';
 
 export default function Login() {
-  const [email, setEmail] = useState('');
+  const [adminId, setAdminId] = useState('');
   const [password, setPassword] = useState('');
   const [studentId, setStudentId] = useState('');
   const [studentPassword, setStudentPassword] = useState('');
   const [teacherId, setTeacherId] = useState('');
   const [teacherPassword, setTeacherPassword] = useState('');
-  const [isSignUp, setIsSignUp] = useState(false);
-  const [fullName, setFullName] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const { signIn, signUp } = useAuth();
+  const { signInWithIdentifier } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  /* Admin / general email login */
-  const handleEmailLogin = async (e: React.FormEvent) => {
+  const handleAdminLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     try {
-      if (isSignUp) {
-        await signUp(email, password, fullName);
-        toast({ title: 'Account created!', description: 'Check your email to verify your account.' });
-      } else {
-        await signIn(email, password);
-        navigate('/dashboard');
-      }
+      await signInWithIdentifier(adminId, password, 'admin');
+      navigate('/dashboard');
     } catch (error: any) {
       toast({ title: 'Error', description: error.message, variant: 'destructive' });
     } finally {
@@ -43,21 +34,11 @@ export default function Login() {
     }
   };
 
-  /* Student login: lookup email by roll_number, then sign in */
   const handleStudentLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     try {
-      const { data: student, error } = await supabase
-        .from('students')
-        .select('email')
-        .eq('roll_number', studentId.trim())
-        .maybeSingle();
-
-      if (error) throw error;
-      if (!student?.email) throw new Error('No student found with that ID. Contact admin.');
-
-      await signIn(student.email, studentPassword);
+      await signInWithIdentifier(studentId, studentPassword, 'student');
       navigate('/dashboard');
     } catch (error: any) {
       toast({ title: 'Student Login Failed', description: error.message, variant: 'destructive' });
@@ -66,28 +47,11 @@ export default function Login() {
     }
   };
 
-  /* Teacher login: lookup by email or teacher id (we use the email field directly or nid as teacher ID) */
   const handleTeacherLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     try {
-      const identifier = teacherId.trim();
-      let teacherEmail = identifier;
-
-      // If it doesn't look like an email, try looking up the teacher by nid (Teacher ID)
-      if (!identifier.includes('@')) {
-        const { data: teacher, error } = await supabase
-          .from('teachers')
-          .select('email')
-          .eq('nid', identifier)
-          .maybeSingle();
-
-        if (error) throw error;
-        if (!teacher?.email) throw new Error('No teacher found with that ID. Contact admin.');
-        teacherEmail = teacher.email;
-      }
-
-      await signIn(teacherEmail, teacherPassword);
+      await signInWithIdentifier(teacherId, teacherPassword, 'teacher');
       navigate('/dashboard');
     } catch (error: any) {
       toast({ title: 'Teacher Login Failed', description: error.message, variant: 'destructive' });
@@ -114,24 +78,17 @@ export default function Login() {
             <TabsTrigger value="student" className="gap-1.5"><UserCheck className="h-3.5 w-3.5" /> Student</TabsTrigger>
           </TabsList>
 
-          {/* Admin / Email login */}
           <TabsContent value="admin">
             <Card>
               <CardHeader>
-                <CardTitle>{isSignUp ? 'Create Account' : 'Admin Sign In'}</CardTitle>
-                <CardDescription>{isSignUp ? 'Register a new account' : 'Use your email & password'}</CardDescription>
+                <CardTitle>Admin Sign In</CardTitle>
+                <CardDescription>Use your admin ID and password</CardDescription>
               </CardHeader>
               <CardContent>
-                <form onSubmit={handleEmailLogin} className="space-y-4">
-                  {isSignUp && (
-                    <div className="space-y-2">
-                      <Label htmlFor="fullName">Full Name</Label>
-                      <Input id="fullName" value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder="Enter your full name" required />
-                    </div>
-                  )}
+                <form onSubmit={handleAdminLogin} className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="email">Email</Label>
-                    <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" required />
+                    <Label htmlFor="adminId">ID</Label>
+                    <Input id="adminId" value={adminId} onChange={(e) => setAdminId(e.target.value)} placeholder="Enter admin ID" required />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="password">Password</Label>
@@ -139,30 +96,24 @@ export default function Login() {
                   </div>
                   <Button type="submit" className="w-full" disabled={isLoading}>
                     {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                    {isSignUp ? 'Create Account' : 'Sign In'}
+                    Sign In
                   </Button>
                 </form>
-                <div className="mt-4 text-center">
-                  <button type="button" className="text-sm text-primary hover:underline" onClick={() => setIsSignUp(!isSignUp)}>
-                    {isSignUp ? 'Already have an account? Sign in' : "Don't have an account? Sign up"}
-                  </button>
-                </div>
               </CardContent>
             </Card>
           </TabsContent>
 
-          {/* Teacher login */}
           <TabsContent value="teacher">
             <Card>
               <CardHeader>
                 <CardTitle>Teacher Sign In</CardTitle>
-                <CardDescription>Use your Teacher ID (NID) or Email</CardDescription>
+                <CardDescription>Use your Teacher ID and password</CardDescription>
               </CardHeader>
               <CardContent>
                 <form onSubmit={handleTeacherLogin} className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="teacherId">Teacher ID or Email</Label>
-                    <Input id="teacherId" value={teacherId} onChange={(e) => setTeacherId(e.target.value)} placeholder="NID or email" required />
+                    <Label htmlFor="teacherId">ID</Label>
+                    <Input id="teacherId" value={teacherId} onChange={(e) => setTeacherId(e.target.value)} placeholder="e.g. T-001" required />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="teacherPwd">Password</Label>
@@ -182,13 +133,13 @@ export default function Login() {
             <Card>
               <CardHeader>
                 <CardTitle>Student Sign In</CardTitle>
-                <CardDescription>Use your Student ID (Roll Number)</CardDescription>
+                <CardDescription>Use your Student ID and password</CardDescription>
               </CardHeader>
               <CardContent>
                 <form onSubmit={handleStudentLogin} className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="studentId">Student ID</Label>
-                    <Input id="studentId" value={studentId} onChange={(e) => setStudentId(e.target.value)} placeholder="e.g. CLASS-9-001" required />
+                    <Label htmlFor="studentId">ID</Label>
+                    <Input id="studentId" value={studentId} onChange={(e) => setStudentId(e.target.value)} placeholder="e.g. 2026001" required />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="studentPwd">Password</Label>
@@ -205,7 +156,7 @@ export default function Login() {
         </Tabs>
 
         <p className="text-center text-xs text-muted-foreground mt-6">
-          Default password for new accounts: <code className="bg-muted px-1 rounded">123456</code> — Contact admin for credentials
+          New student and teacher accounts start with <code className="bg-muted px-1 rounded">123456</code> and must change it on first login.
         </p>
       </div>
     </div>

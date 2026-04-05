@@ -24,10 +24,11 @@ type Teacher = {
   subject: string | null;
   salary: number | null;
   joining_date: string | null;
+  is_first_login?: boolean;
 };
 
 const emptyForm = {
-  full_name: '', parents_names: '', dob: '', gender: '', nid: '',
+  full_name: '', parents_names: '', dob: '', gender: '',
   mobile: '', email: '', address: '', qualification: '', subject: '',
   salary: '', joining_date: '',
 };
@@ -65,7 +66,6 @@ export default function TeachersPage() {
       parents_names: form.parents_names || null,
       dob: form.dob || null,
       gender: form.gender || null,
-      nid: form.nid || null,
       mobile: form.mobile || null,
       email: form.email || null,
       address: form.address || null,
@@ -77,14 +77,22 @@ export default function TeachersPage() {
 
     let error;
     let savedTeacher: Teacher | null = null;
+    let createdLoginId: string | null = null;
     if (editId) {
       const response = await supabase.from('teachers').update(payload).eq('id', editId).select().single();
       error = response.error;
       savedTeacher = response.data;
     } else {
-      const response = await supabase.from('teachers').insert(payload).select().single();
-      error = response.error;
-      savedTeacher = response.data;
+      const response = await supabase.functions.invoke('provision-managed-user', {
+        body: {
+          type: 'teacher',
+          payload,
+        },
+      });
+
+      error = response.error ?? (response.data?.error ? { message: response.data.error } : null);
+      savedTeacher = response.data?.record;
+      createdLoginId = response.data?.loginId ?? null;
     }
 
     if (error) {
@@ -97,7 +105,10 @@ export default function TeachersPage() {
             : [savedTeacher!, ...current]
         );
       }
-      toast({ title: editId ? 'Teacher updated!' : 'Teacher added!' });
+      toast({
+        title: editId ? 'Teacher updated!' : 'Teacher account created!',
+        description: editId ? undefined : `Teacher ID: ${createdLoginId} · Default password: 123456`,
+      });
       setDialogOpen(false);
       setForm(emptyForm);
       setEditId(null);
@@ -111,7 +122,6 @@ export default function TeachersPage() {
       parents_names: t.parents_names ?? '',
       dob: t.dob ?? '',
       gender: t.gender ?? '',
-      nid: t.nid ?? '',
       mobile: t.mobile ?? '',
       email: t.email ?? '',
       address: t.address ?? '',
@@ -170,10 +180,12 @@ export default function TeachersPage() {
                   </SelectContent>
                 </Select>
               </div>
-              <div className="space-y-2">
-                <Label>NID</Label>
-                <Input value={form.nid} onChange={(e) => handleChange('nid', e.target.value)} />
-              </div>
+              {editId && (
+                <div className="space-y-2">
+                  <Label>Teacher ID</Label>
+                  <Input value={teachers.find((teacher) => teacher.id === editId)?.nid ?? ''} readOnly />
+                </div>
+              )}
               <div className="space-y-2">
                 <Label>Mobile</Label>
                 <Input value={form.mobile} onChange={(e) => handleChange('mobile', e.target.value)} />
@@ -224,6 +236,7 @@ export default function TeachersPage() {
               <Table>
                 <TableHeader>
                   <TableRow>
+                    <TableHead>Teacher ID</TableHead>
                     <TableHead>Name</TableHead>
                     <TableHead>Subject</TableHead>
                     <TableHead>Mobile</TableHead>
@@ -235,6 +248,7 @@ export default function TeachersPage() {
                 <TableBody>
                   {teachers.map((t) => (
                     <TableRow key={t.id}>
+                      <TableCell className="font-mono text-sm">{t.nid}</TableCell>
                       <TableCell className="font-medium">{t.full_name}</TableCell>
                       <TableCell>{t.subject}</TableCell>
                       <TableCell>{t.mobile}</TableCell>
