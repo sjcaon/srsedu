@@ -1,5 +1,5 @@
 import {
-  LayoutDashboard, Users, GraduationCap, UserCheck, CalendarCheck,
+  LayoutDashboard, Users, GraduationCap, CalendarCheck,
   ClipboardList, FileText, Clock, Wallet, Mail, Shield, Award, LogOut,
 } from 'lucide-react';
 import { NavLink } from '@/components/NavLink';
