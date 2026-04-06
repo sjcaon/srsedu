@@ -402,9 +402,16 @@ export type Database = {
           admission_date: string | null
           created_at: string
           current_class: string
+          dob: string | null
           email: string | null
           full_name: string
+          gender: string | null
+          guardian_address: string | null
           guardian_id: string | null
+          guardian_name: string | null
+          guardian_occupation: string | null
+          guardian_phone: string | null
+          guardian_relation: string | null
           id: string
           is_first_login: boolean
           mobile: string | null
@@ -418,9 +425,16 @@ export type Database = {
           admission_date?: string | null
           created_at?: string
           current_class: string
+          dob?: string | null
           email?: string | null
           full_name: string
+          gender?: string | null
+          guardian_address?: string | null
           guardian_id?: string | null
+          guardian_name?: string | null
+          guardian_occupation?: string | null
+          guardian_phone?: string | null
+          guardian_relation?: string | null
           id?: string
           is_first_login?: boolean
           mobile?: string | null
@@ -434,9 +448,16 @@ export type Database = {
           admission_date?: string | null
           created_at?: string
           current_class?: string
+          dob?: string | null
           email?: string | null
           full_name?: string
+          gender?: string | null
+          guardian_address?: string | null
           guardian_id?: string | null
+          guardian_name?: string | null
+          guardian_occupation?: string | null
+          guardian_phone?: string | null
+          guardian_relation?: string | null
           id?: string
           is_first_login?: boolean
           mobile?: string | null
