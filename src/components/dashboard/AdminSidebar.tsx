@@ -14,7 +14,7 @@ const menuItems = [
   { title: 'Overview', url: '/dashboard', icon: LayoutDashboard },
   { title: 'Teachers', url: '/dashboard/teachers', icon: Users },
   { title: 'Students', url: '/dashboard/students', icon: GraduationCap },
-  { title: 'Guardians', url: '/dashboard/guardians', icon: UserCheck },
+  
   { title: 'Attendance', url: '/dashboard/attendance', icon: CalendarCheck },
   { title: 'Exams', url: '/dashboard/exams', icon: ClipboardList },
   { title: 'Results', url: '/dashboard/results', icon: Award },
