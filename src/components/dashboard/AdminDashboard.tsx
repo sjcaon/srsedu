@@ -4,7 +4,7 @@ import AdminSidebar from './AdminSidebar';
 import OverviewPage from '@/pages/admin/OverviewPage';
 import TeachersPage from '@/pages/admin/TeachersPage';
 import StudentsPage from '@/pages/admin/StudentsPage';
-import GuardiansPage from '@/pages/admin/GuardiansPage';
+
 import AttendancePage from '@/pages/admin/AttendancePage';
 import ExamsPage from '@/pages/admin/ExamsPage';
 import ResultsPage from '@/pages/admin/ResultsPage';
@@ -31,7 +31,7 @@ export default function AdminDashboard() {
               <Route index element={<OverviewPage />} />
               <Route path="teachers" element={<TeachersPage />} />
               <Route path="students" element={<StudentsPage />} />
-              <Route path="guardians" element={<GuardiansPage />} />
+              
               <Route path="attendance" element={<AttendancePage />} />
               <Route path="exams" element={<ExamsPage />} />
               <Route path="results" element={<ResultsPage />} />
