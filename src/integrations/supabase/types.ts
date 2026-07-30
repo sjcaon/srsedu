@@ -10,7 +10,7 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "14.4"
+    PostgrestVersion: "14.5"
   }
   public: {
     Tables: {
@@ -398,72 +398,207 @@ export type Database = {
       }
       students: {
         Row: {
+          academic_year: string | null
           address: string | null
           admission_date: string | null
+          admission_exam_score: string | null
+          allergies: string | null
+          annual_family_income: number | null
+          birth_certificate_no: string | null
+          birth_certificate_url: string | null
+          blood_group: string | null
+          board_reg_no: string | null
+          board_roll_no: string | null
           created_at: string
           current_class: string
+          disease_disability: string | null
           dob: string | null
           email: string | null
+          emergency_contact_mobile: string | null
+          emergency_contact_name: string | null
+          father_mobile: string | null
+          father_name: string | null
+          father_nid: string | null
+          father_profession: string | null
           full_name: string
+          full_name_bn: string | null
           gender: string | null
           guardian_address: string | null
           guardian_id: string | null
           guardian_name: string | null
+          guardian_nid_url: string | null
           guardian_occupation: string | null
           guardian_phone: string | null
           guardian_relation: string | null
           id: string
           is_first_login: boolean
+          last_class_passed: string | null
+          last_exam_result: string | null
+          local_guardian_mobile: string | null
+          local_guardian_name: string | null
+          local_guardian_relation: string | null
+          marksheet_url: string | null
           mobile: string | null
+          mother_mobile: string | null
+          mother_name: string | null
+          mother_nid: string | null
+          mother_profession: string | null
+          nationality: string | null
           parents_names: string | null
+          permanent_district: string | null
+          permanent_po: string | null
+          permanent_upazila: string | null
+          permanent_village: string | null
+          photo_url: string | null
+          present_district: string | null
+          present_po: string | null
+          present_upazila: string | null
+          present_village: string | null
+          previous_school_address: string | null
+          previous_school_name: string | null
+          religion: string | null
+          residential_status: string | null
           roll_number: string | null
+          section: string | null
           student_group: string | null
+          tc_no: string | null
+          tc_url: string | null
           user_id: string | null
         }
         Insert: {
+          academic_year?: string | null
           address?: string | null
           admission_date?: string | null
+          admission_exam_score?: string | null
+          allergies?: string | null
+          annual_family_income?: number | null
+          birth_certificate_no?: string | null
+          birth_certificate_url?: string | null
+          blood_group?: string | null
+          board_reg_no?: string | null
+          board_roll_no?: string | null
           created_at?: string
           current_class: string
+          disease_disability?: string | null
           dob?: string | null
           email?: string | null
+          emergency_contact_mobile?: string | null
+          emergency_contact_name?: string | null
+          father_mobile?: string | null
+          father_name?: string | null
+          father_nid?: string | null
+          father_profession?: string | null
           full_name: string
+          full_name_bn?: string | null
           gender?: string | null
           guardian_address?: string | null
           guardian_id?: string | null
           guardian_name?: string | null
+          guardian_nid_url?: string | null
           guardian_occupation?: string | null
           guardian_phone?: string | null
           guardian_relation?: string | null
           id?: string
           is_first_login?: boolean
+          last_class_passed?: string | null
+          last_exam_result?: string | null
+          local_guardian_mobile?: string | null
+          local_guardian_name?: string | null
+          local_guardian_relation?: string | null
+          marksheet_url?: string | null
           mobile?: string | null
+          mother_mobile?: string | null
+          mother_name?: string | null
+          mother_nid?: string | null
+          mother_profession?: string | null
+          nationality?: string | null
           parents_names?: string | null
+          permanent_district?: string | null
+          permanent_po?: string | null
+          permanent_upazila?: string | null
+          permanent_village?: string | null
+          photo_url?: string | null
+          present_district?: string | null
+          present_po?: string | null
+          present_upazila?: string | null
+          present_village?: string | null
+          previous_school_address?: string | null
+          previous_school_name?: string | null
+          religion?: string | null
+          residential_status?: string | null
           roll_number?: string | null
+          section?: string | null
           student_group?: string | null
+          tc_no?: string | null
+          tc_url?: string | null
           user_id?: string | null
         }
         Update: {
+          academic_year?: string | null
           address?: string | null
           admission_date?: string | null
+          admission_exam_score?: string | null
+          allergies?: string | null
+          annual_family_income?: number | null
+          birth_certificate_no?: string | null
+          birth_certificate_url?: string | null
+          blood_group?: string | null
+          board_reg_no?: string | null
+          board_roll_no?: string | null
           created_at?: string
           current_class?: string
+          disease_disability?: string | null
           dob?: string | null
           email?: string | null
+          emergency_contact_mobile?: string | null
+          emergency_contact_name?: string | null
+          father_mobile?: string | null
+          father_name?: string | null
+          father_nid?: string | null
+          father_profession?: string | null
           full_name?: string
+          full_name_bn?: string | null
           gender?: string | null
           guardian_address?: string | null
           guardian_id?: string | null
           guardian_name?: string | null
+          guardian_nid_url?: string | null
           guardian_occupation?: string | null
           guardian_phone?: string | null
           guardian_relation?: string | null
           id?: string
           is_first_login?: boolean
+          last_class_passed?: string | null
+          last_exam_result?: string | null
+          local_guardian_mobile?: string | null
+          local_guardian_name?: string | null
+          local_guardian_relation?: string | null
+          marksheet_url?: string | null
           mobile?: string | null
+          mother_mobile?: string | null
+          mother_name?: string | null
+          mother_nid?: string | null
+          mother_profession?: string | null
+          nationality?: string | null
           parents_names?: string | null
+          permanent_district?: string | null
+          permanent_po?: string | null
+          permanent_upazila?: string | null
+          permanent_village?: string | null
+          photo_url?: string | null
+          present_district?: string | null
+          present_po?: string | null
+          present_upazila?: string | null
+          present_village?: string | null
+          previous_school_address?: string | null
+          previous_school_name?: string | null
+          religion?: string | null
+          residential_status?: string | null
           roll_number?: string | null
+          section?: string | null
           student_group?: string | null
+          tc_no?: string | null
+          tc_url?: string | null
           user_id?: string | null
         }
         Relationships: [
@@ -479,56 +614,161 @@ export type Database = {
       teachers: {
         Row: {
           address: string | null
+          applied_post: string | null
+          bank_account_no: string | null
+          bank_branch: string | null
+          bank_name: string | null
+          bed_med: string | null
+          blood_group: string | null
+          class_assigned: string | null
           created_at: string
+          cv_url: string | null
+          department: string | null
           dob: string | null
+          education_certificate_urls: string[]
           email: string | null
+          employment_type: string | null
+          expected_salary: number | null
+          experience_certificate_url: string | null
+          father_husband_name: string | null
           full_name: string
           gender: string | null
           id: string
           is_first_login: boolean
           joining_date: string | null
+          madrasa_certificates: string | null
+          marital_status: string | null
           mobile: string | null
+          mobile_banking_no: string | null
+          mother_name: string | null
+          national_id: string | null
           nid: string | null
+          nid_scan_url: string | null
+          no_criminal_record: boolean
           parents_names: string | null
+          permanent_address: string | null
+          photo_url: string | null
+          physically_fit: boolean
+          police_clearance_url: string | null
+          present_address: string | null
+          previous_jobs: Json
+          probation_period: string | null
           qualification: string | null
+          qualifications: Json
+          reference_contacts: Json
+          religion: string | null
+          routing_no: string | null
           salary: number | null
+          special_training: string | null
           subject: string | null
+          tin: string | null
+          total_experience_years: number | null
           user_id: string | null
         }
         Insert: {
           address?: string | null
+          applied_post?: string | null
+          bank_account_no?: string | null
+          bank_branch?: string | null
+          bank_name?: string | null
+          bed_med?: string | null
+          blood_group?: string | null
+          class_assigned?: string | null
           created_at?: string
+          cv_url?: string | null
+          department?: string | null
           dob?: string | null
+          education_certificate_urls?: string[]
           email?: string | null
+          employment_type?: string | null
+          expected_salary?: number | null
+          experience_certificate_url?: string | null
+          father_husband_name?: string | null
           full_name: string
           gender?: string | null
           id?: string
           is_first_login?: boolean
           joining_date?: string | null
+          madrasa_certificates?: string | null
+          marital_status?: string | null
           mobile?: string | null
+          mobile_banking_no?: string | null
+          mother_name?: string | null
+          national_id?: string | null
           nid?: string | null
+          nid_scan_url?: string | null
+          no_criminal_record?: boolean
           parents_names?: string | null
+          permanent_address?: string | null
+          photo_url?: string | null
+          physically_fit?: boolean
+          police_clearance_url?: string | null
+          present_address?: string | null
+          previous_jobs?: Json
+          probation_period?: string | null
           qualification?: string | null
+          qualifications?: Json
+          reference_contacts?: Json
+          religion?: string | null
+          routing_no?: string | null
           salary?: number | null
+          special_training?: string | null
           subject?: string | null
+          tin?: string | null
+          total_experience_years?: number | null
           user_id?: string | null
         }
         Update: {
           address?: string | null
+          applied_post?: string | null
+          bank_account_no?: string | null
+          bank_branch?: string | null
+          bank_name?: string | null
+          bed_med?: string | null
+          blood_group?: string | null
+          class_assigned?: string | null
           created_at?: string
+          cv_url?: string | null
+          department?: string | null
           dob?: string | null
+          education_certificate_urls?: string[]
           email?: string | null
+          employment_type?: string | null
+          expected_salary?: number | null
+          experience_certificate_url?: string | null
+          father_husband_name?: string | null
           full_name?: string
           gender?: string | null
           id?: string
           is_first_login?: boolean
           joining_date?: string | null
+          madrasa_certificates?: string | null
+          marital_status?: string | null
           mobile?: string | null
+          mobile_banking_no?: string | null
+          mother_name?: string | null
+          national_id?: string | null
           nid?: string | null
+          nid_scan_url?: string | null
+          no_criminal_record?: boolean
           parents_names?: string | null
+          permanent_address?: string | null
+          photo_url?: string | null
+          physically_fit?: boolean
+          police_clearance_url?: string | null
+          present_address?: string | null
+          previous_jobs?: Json
+          probation_period?: string | null
           qualification?: string | null
+          qualifications?: Json
+          reference_contacts?: Json
+          religion?: string | null
+          routing_no?: string | null
           salary?: number | null
+          special_training?: string | null
           subject?: string | null
+          tin?: string | null
+          total_experience_years?: number | null
           user_id?: string | null
         }
         Relationships: []
