@@ -11,10 +11,19 @@ export default function TeacherRoutine() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    supabase.from('routines').select('*, teachers(full_name)').order('period_number').then(({ data }) => {
-      setRoutines(data ?? []);
+    const load = async () => {
+      const [r, t] = await Promise.all([
+        supabase.from('routines').select('*').order('period_number'),
+        supabase.rpc('get_teacher_directory'),
+      ]);
+      const nameById = new Map((t.data ?? []).map((entry: any) => [entry.id, entry.full_name]));
+      setRoutines((r.data ?? []).map((row: any) => ({
+        ...row,
+        teachers: row.teacher_id ? { full_name: nameById.get(row.teacher_id) ?? null } : null,
+      })));
       setLoading(false);
-    });
+    };
+    load();
   }, []);
 
   const grouped = routines.reduce((acc, r) => {

@@ -817,6 +817,39 @@ export type Database = {
           user_id: string
         }[]
       }
+      get_public_notices: {
+        Args: { _limit?: number }
+        Returns: {
+          created_at: string
+          description: string
+          id: string
+          image_url: string
+          title: string
+        }[]
+      }
+      get_student_roster: {
+        Args: { _class?: string }
+        Returns: {
+          current_class: string
+          full_name: string
+          guardian_name: string
+          guardian_phone: string
+          id: string
+          roll_number: string
+          section: string
+          student_group: string
+        }[]
+      }
+      get_teacher_directory: {
+        Args: never
+        Returns: {
+          class_assigned: string
+          department: string
+          full_name: string
+          id: string
+          subject: string
+        }[]
+      }
       get_user_role: {
         Args: { _user_id: string }
         Returns: Database["public"]["Enums"]["app_role"]

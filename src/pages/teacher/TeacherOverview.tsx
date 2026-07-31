@@ -13,12 +13,12 @@ export default function TeacherOverview() {
   useEffect(() => {
     const fetch = async () => {
       const [s, a, r, m] = await Promise.all([
-        supabase.from('students').select('id', { count: 'exact', head: true }),
+        supabase.rpc('get_student_roster'),
         supabase.from('attendance').select('id', { count: 'exact', head: true }).eq('marked_by', user?.id ?? ''),
         supabase.from('results').select('id', { count: 'exact', head: true }),
         supabase.from('messages').select('id', { count: 'exact', head: true }).eq('receiver_id', user?.id ?? '').eq('read_status', false),
       ]);
-      setStats({ students: s.count ?? 0, attendance: a.count ?? 0, results: r.count ?? 0, messages: m.count ?? 0 });
+      setStats({ students: (s.data ?? []).length, attendance: a.count ?? 0, results: r.count ?? 0, messages: m.count ?? 0 });
     };
     fetch();
   }, [user]);
