@@ -102,7 +102,7 @@ export default function StudentFeesPage() {
       else payload[key] = num(value);
     });
 
-    const { error } = await supabase.from('student_fee_profiles').upsert(payload, { onConflict: 'student_id' });
+    const { error } = await supabase.from('student_fee_profiles').upsert(payload as never, { onConflict: 'student_id' });
     if (error) toast({ title: 'Error', description: error.message, variant: 'destructive' });
     else {
       toast({ title: 'Fee profile saved' });

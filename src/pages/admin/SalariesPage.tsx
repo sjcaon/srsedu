@@ -81,7 +81,7 @@ export default function SalariesPage() {
     const payload: Record<string, unknown> = { teacher_id: activeTeacher.id };
     Object.entries(form).forEach(([k, v]) => { payload[k] = num(v); });
 
-    const { error } = await supabase.from('teacher_salary_profiles').upsert(payload, { onConflict: 'teacher_id' });
+    const { error } = await supabase.from('teacher_salary_profiles').upsert(payload as never, { onConflict: 'teacher_id' });
     if (error) toast({ title: 'Error', description: error.message, variant: 'destructive' });
     else {
       toast({ title: 'Salary profile saved' });
