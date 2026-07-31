@@ -44,7 +44,7 @@ export default function ResultsPage() {
     const fetchData = async () => {
       setLoading(true);
       const [s, r] = await Promise.all([
-        supabase.from('students').select('id, full_name, roll_number').eq('current_class', selectedClass).order('roll_number'),
+        supabase.rpc('get_student_roster', { _class: selectedClass }),
         supabase.from('results').select('*').eq('exam_id', selectedExam),
       ]);
       setStudents(s.data ?? []);

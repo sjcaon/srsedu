@@ -20,7 +20,7 @@ export default function PublicHome() {
       const [s, t, n] = await Promise.all([
         supabase.from('students').select('id', { count: 'exact', head: true }),
         supabase.from('teachers').select('id', { count: 'exact', head: true }),
-        supabase.from('notices').select('*').order('created_at', { ascending: false }).limit(3),
+        supabase.rpc('get_public_notices', { _limit: 3 }),
       ]);
       setStats({ students: s.count ?? 0, teachers: t.count ?? 0 });
       setNotices(n.data ?? []);
