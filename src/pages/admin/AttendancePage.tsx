@@ -26,11 +26,7 @@ export default function AttendancePage() {
     if (!selectedClass) return;
     const fetchStudents = async () => {
       setLoading(true);
-      const { data } = await supabase
-        .from('students')
-        .select('id, full_name, roll_number')
-        .eq('current_class', selectedClass)
-        .order('roll_number');
+      const { data } = await supabase.rpc('get_student_roster', { _class: selectedClass });
       setStudents(data ?? []);
 
       // Fetch existing attendance
