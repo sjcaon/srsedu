@@ -11,8 +11,13 @@ import ResultsPage from '@/pages/admin/ResultsPage';
 import NoticesPage from '@/pages/admin/NoticesPage';
 import RoutinesPage from '@/pages/admin/RoutinesPage';
 import FeesPage from '@/pages/admin/FeesPage';
+import StudentFeesPage from '@/pages/admin/StudentFeesPage';
+import SalariesPage from '@/pages/admin/SalariesPage';
+import ExpensesPage from '@/pages/admin/ExpensesPage';
+import FinanceOverviewPage from '@/pages/admin/FinanceOverviewPage';
 import MessagesPage from '@/pages/admin/MessagesPage';
 import RolesPage from '@/pages/admin/RolesPage';
+
 
 export default function AdminDashboard() {
   return (

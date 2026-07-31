@@ -1,6 +1,7 @@
 import {
   LayoutDashboard, Users, GraduationCap, CalendarCheck,
   ClipboardList, FileText, Clock, Wallet, Mail, Shield, Award, LogOut,
+  BadgeDollarSign, ReceiptText, PieChart,
 } from 'lucide-react';
 import { NavLink } from '@/components/NavLink';
 import { useAuth } from '@/hooks/useAuth';
@@ -19,11 +20,15 @@ const menuItems = [
   { title: 'Exams', url: '/dashboard/exams', icon: ClipboardList },
   { title: 'Results', url: '/dashboard/results', icon: Award },
   { title: 'Routines', url: '/dashboard/routines', icon: Clock },
-  { title: 'Fees', url: '/dashboard/fees', icon: Wallet },
+  { title: 'Finance', url: '/dashboard/finance', icon: PieChart },
+  { title: 'Student Fees', url: '/dashboard/student-fees', icon: Wallet },
+  { title: 'Salaries', url: '/dashboard/salaries', icon: BadgeDollarSign },
+  { title: 'Expenses', url: '/dashboard/expenses', icon: ReceiptText },
   { title: 'Notices', url: '/dashboard/notices', icon: FileText },
   { title: 'Messages', url: '/dashboard/messages', icon: Mail },
   { title: 'Roles', url: '/dashboard/roles', icon: Shield },
 ];
+
 
 export default function AdminSidebar() {
   const { state } = useSidebar();
