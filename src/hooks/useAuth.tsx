@@ -32,6 +32,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [accessContext, setAccessContext] = useState<AccessContext>({ loginId: null, isFirstLogin: false });
   const [loading, setLoading] = useState(true);
   const syncingRef = useRef(false);
+  // Tracks the user id whose profile/role/context has already been hydrated so
+  // token refreshes and duplicate auth events never re-trigger backend calls.
+  const hydratedUserRef = useRef<string | null>(null);
 
   const fetchUserRole = async (userId: string) => {
     const { data: existingRole, error } = await supabase.rpc('get_user_role', { _user_id: userId });
@@ -64,35 +67,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       .eq('user_id', sessionUser.id)
       .maybeSingle();
 
-    if (error) {
-      console.error('Failed to fetch profile', error);
-      setProfile(fallbackProfile);
-      return fallbackProfile;
-    }
-
-    if (data) {
+    if (!error && data) {
       setProfile(data);
       return data;
     }
 
-    // Profile doesn't exist — try to create once (trigger should handle this, but fallback)
-    const { data: createdProfile, error: createError } = await supabase
-      .from('profiles')
-      .insert({
-        user_id: sessionUser.id,
-        full_name: fallbackProfile.full_name,
-        email: fallbackProfile.email,
-      })
-      .select('full_name, email')
-      .single();
+    if (error) console.error('Failed to fetch profile', error);
 
-    if (!createError && createdProfile) {
-      setProfile(createdProfile);
-      return createdProfile;
+    // Profile row missing (or unreadable) — create/repair it through a secure
+    // server-side upsert instead of a direct insert that RLS can reject.
+    const { data: ensured, error: ensureError } = await supabase.rpc('ensure_own_profile', {
+      _full_name: fallbackProfile.full_name,
+      _email: fallbackProfile.email,
+    });
+
+    const ensuredRow = Array.isArray(ensured) ? ensured[0] : null;
+    if (!ensureError && ensuredRow) {
+      const nextProfile = { full_name: ensuredRow.full_name, email: ensuredRow.email };
+      setProfile(nextProfile);
+      return nextProfile;
     }
 
-    // If insert also fails (RLS), just use fallback — don't retry infinitely
-    console.warn('Could not create profile, using fallback', createError?.message);
+    console.warn('Could not ensure profile, using fallback', ensureError?.message);
     setProfile(fallbackProfile);
     return fallbackProfile;
   };
@@ -117,7 +113,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const syncSession = async (nextSession: Session | null) => {
-    // Prevent concurrent syncs
     if (syncingRef.current) return;
     syncingRef.current = true;
 
@@ -125,6 +120,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(nextSession?.user ?? null);
 
     if (!nextSession?.user) {
+      hydratedUserRef.current = null;
       setRole(null);
       setProfile(null);
       setAccessContext({ loginId: null, isFirstLogin: false });
@@ -133,11 +129,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return;
     }
 
+    // Same user already hydrated (e.g. token refresh) — no backend round-trips.
+    if (hydratedUserRef.current === nextSession.user.id) {
+      setLoading(false);
+      syncingRef.current = false;
+      return;
+    }
+
     try {
       await fetchUserRole(nextSession.user.id);
       await Promise.all([fetchProfile(nextSession.user), fetchAccessContext()]);
+      hydratedUserRef.current = nextSession.user.id;
     } catch (error) {
       console.error('Failed to sync auth state', error);
+      hydratedUserRef.current = null;
       setRole(null);
       setAccessContext({ loginId: null, isFirstLogin: false });
     } finally {
@@ -149,18 +154,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     let mounted = true;
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (_event, session) => {
-        if (!mounted) return;
-        setLoading(true);
-        setTimeout(() => {
-          if (mounted) void syncSession(session);
-        }, 0);
-      }
-    );
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, nextSession) => {
+      if (!mounted) return;
 
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (mounted) void syncSession(session);
+      // Token refreshes only rotate the JWT — update it in place, never refetch.
+      if (event === 'TOKEN_REFRESHED' && nextSession?.user?.id === hydratedUserRef.current) {
+        setSession(nextSession);
+        setUser(nextSession.user);
+        return;
+      }
+
+      if (nextSession?.user?.id && hydratedUserRef.current === nextSession.user.id) {
+        setSession(nextSession);
+        setUser(nextSession.user);
+        setLoading(false);
+        return;
+      }
+
+      setLoading(true);
+      setTimeout(() => {
+        if (mounted) void syncSession(nextSession);
+      }, 0);
+    });
+
+    supabase.auth.getSession().then(({ data: { session: initialSession } }) => {
+      if (mounted) void syncSession(initialSession);
     });
 
     return () => {
@@ -197,12 +215,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (data.session?.user) {
       await fetchUserRole(data.session.user.id);
       await Promise.all([fetchProfile(data.session.user), fetchAccessContext()]);
+      hydratedUserRef.current = data.session.user.id;
     }
   };
 
   const signOut = async () => {
     const { error } = await supabase.auth.signOut();
     if (error) throw error;
+    hydratedUserRef.current = null;
     setUser(null);
     setSession(null);
     setRole(null);
