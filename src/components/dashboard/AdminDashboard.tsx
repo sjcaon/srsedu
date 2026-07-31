@@ -43,6 +43,11 @@ export default function AdminDashboard() {
               <Route path="notices" element={<NoticesPage />} />
               <Route path="routines" element={<RoutinesPage />} />
               <Route path="fees" element={<FeesPage />} />
+              <Route path="finance" element={<FinanceOverviewPage />} />
+              <Route path="student-fees" element={<StudentFeesPage />} />
+              <Route path="salaries" element={<SalariesPage />} />
+              <Route path="expenses" element={<ExpensesPage />} />
+
               <Route path="messages" element={<MessagesPage />} />
               <Route path="roles" element={<RolesPage />} />
             </Routes>
