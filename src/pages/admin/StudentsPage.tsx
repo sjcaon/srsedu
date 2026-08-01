@@ -8,7 +8,8 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
+import { provisionManagedUser } from '@/lib/managedAuth';
 import { Plus, Pencil, Trash2, Loader2, Search, Download, Eye, ChevronLeft, ChevronRight } from 'lucide-react';
 import { exportToCSV } from '@/lib/csvExport';
 import { Separator } from '@/components/ui/separator';
@@ -69,7 +70,6 @@ export default function StudentsPage() {
   const [saving, setSaving] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterClass, setFilterClass] = useState('all');
-  const { toast } = useToast();
 
   const fetchData = async () => {
     setLoading(true);
@@ -79,7 +79,7 @@ export default function StudentsPage() {
       .order('created_at', { ascending: false });
 
     if (error) {
-      toast({ title: 'Error', description: error.message, variant: 'destructive' });
+      toast.error(error.message);
       setStudents([]);
     } else {
       setStudents(data ?? []);
@@ -179,7 +179,7 @@ export default function StudentsPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.full_name.trim() || !form.current_class) {
-      toast({ title: 'Missing required fields', description: 'Full Name and Applied Class are required.', variant: 'destructive' });
+      toast.error('Full Name and Applied Class are required.');
       return;
     }
     setSaving(true);
@@ -226,10 +226,10 @@ export default function StudentsPage() {
   const handleDelete = async (id: string) => {
     const { error } = await supabase.from('students').delete().eq('id', id);
     if (error) {
-      toast({ title: 'Error', description: error.message, variant: 'destructive' });
+      toast.error(error.message);
     } else {
       setStudents((current) => current.filter((s) => s.id !== id));
-      toast({ title: 'Student deleted' });
+      toast.success('Student deleted');
     }
   };
 

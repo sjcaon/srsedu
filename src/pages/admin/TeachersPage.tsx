@@ -10,7 +10,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
+import { provisionManagedUser } from '@/lib/managedAuth';
 import { Plus, Pencil, Trash2, Loader2, Eye, ChevronLeft, ChevronRight, X, Search } from 'lucide-react';
 import { WizardNav, SectionGrid } from '@/components/forms/FormWizard';
 import { FileUploadField, MultiFileUploadField } from '@/components/forms/FileUploadField';
@@ -80,13 +81,12 @@ export default function TeachersPage() {
   const [viewTeacher, setViewTeacher] = useState<any | null>(null);
   const [saving, setSaving] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const { toast } = useToast();
 
   const fetchTeachers = async () => {
     setLoading(true);
     const { data, error } = await supabase.from('teachers').select('*').order('created_at', { ascending: false });
     if (error) {
-      toast({ title: 'Error', description: error.message, variant: 'destructive' });
+      toast.error(error.message);
       setTeachers([]);
     } else {
       setTeachers(data ?? []);
@@ -173,7 +173,7 @@ export default function TeachersPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.full_name.trim() || !form.mobile.trim()) {
-      toast({ title: 'Missing required fields', description: 'Full Name and Mobile are required.', variant: 'destructive' });
+      toast.error('Full Name and Mobile are required.');
       return;
     }
     setSaving(true);
@@ -231,10 +231,10 @@ export default function TeachersPage() {
   const handleDelete = async (id: string) => {
     const { error } = await supabase.from('teachers').delete().eq('id', id);
     if (error) {
-      toast({ title: 'Error', description: error.message, variant: 'destructive' });
+      toast.error(error.message);
     } else {
       setTeachers((current) => current.filter((teacher) => teacher.id !== id));
-      toast({ title: 'Teacher deleted' });
+      toast.success('Teacher deleted');
     }
   };
 
