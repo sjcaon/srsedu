@@ -126,8 +126,17 @@ Deno.serve(async (req) => {
     }
 
     try {
+      // Never let the client set identity columns, and drop undefined values so
+      // the insert always matches the real table columns.
+      const cleanPayload: Record<string, unknown> = {};
+      for (const [key, value] of Object.entries(payload ?? {})) {
+        if (value === undefined) continue;
+        if (['id', 'user_id', 'is_first_login', 'roll_number', 'nid', 'created_at'].includes(key)) continue;
+        cleanPayload[key] = value;
+      }
+
       const recordPayload = {
-        ...payload,
+        ...cleanPayload,
         user_id: authUser.user.id,
         [idField]: loginId,
         is_first_login: true,
