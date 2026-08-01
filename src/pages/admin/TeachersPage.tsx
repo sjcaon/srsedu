@@ -179,39 +179,22 @@ export default function TeachersPage() {
     setSaving(true);
     const payload = buildPayload();
 
-    let error;
-    let savedTeacher: any = null;
-    let createdLoginId: string | null = null;
-
-    if (editId) {
-      const response = await supabase.from('teachers').update(payload).eq('id', editId).select().single();
-      error = response.error;
-      savedTeacher = response.data;
-    } else {
-      const response = await supabase.functions.invoke('provision-managed-user', {
-        body: { type: 'teacher', payload },
-      });
-      error = response.error ?? (response.data?.error ? { message: response.data.error } : null);
-      savedTeacher = response.data?.record;
-      createdLoginId = response.data?.loginId ?? null;
-    }
-
-    if (error) {
-      toast({ title: 'Error', description: error.message, variant: 'destructive' });
-    } else {
-      if (savedTeacher) {
-        setTeachers((current) =>
-          editId
-            ? current.map((teacher) => (teacher.id === savedTeacher.id ? savedTeacher : teacher))
-            : [savedTeacher, ...current]
-        );
+    try {
+      if (editId) {
+        const { error } = await supabase.from('teachers').update(payload as never).eq('id', editId).select().single();
+        if (error) throw error;
+        toast.success('Teacher updated successfully');
+      } else {
+        const result = await provisionManagedUser('teacher', payload);
+        toast.success('Teacher account created', {
+          description: `Teacher ID: ${result.loginId} · Default password: 123456`,
+        });
       }
-      toast({
-        title: editId ? 'Teacher updated!' : 'Teacher account created!',
-        description: editId ? undefined : `Teacher ID: ${createdLoginId} · Default password: 123456`,
-      });
       setDialogOpen(false);
       resetForm();
+      await fetchTeachers();
+    } catch (err: any) {
+      toast.error(err?.message ?? 'Could not save the teacher.');
     }
     setSaving(false);
   };

@@ -185,35 +185,22 @@ export default function StudentsPage() {
     setSaving(true);
     const payload = buildPayload();
 
-    let error;
-    let saved: any = null;
-    let createdLoginId: string | null = null;
-
-    if (editId) {
-      const res = await supabase.from('students').update(payload).eq('id', editId).select().single();
-      error = res.error;
-      saved = res.data;
-    } else {
-      const res = await supabase.functions.invoke('provision-managed-user', {
-        body: { type: 'student', payload },
-      });
-      error = res.error ?? (res.data?.error ? { message: res.data.error } : null);
-      saved = res.data?.record;
-      createdLoginId = res.data?.loginId ?? null;
-    }
-
-    if (error) {
-      toast({ title: 'Error', description: error.message, variant: 'destructive' });
-    } else {
-      setStudents((current) =>
-        editId ? current.map((s) => (s.id === saved.id ? saved : s)) : [saved, ...current]
-      );
-      toast({
-        title: editId ? 'Student updated!' : 'Student account created!',
-        description: editId ? undefined : `Student ID: ${createdLoginId} · Default password: 123456`,
-      });
+    try {
+      if (editId) {
+        const { error } = await supabase.from('students').update(payload as never).eq('id', editId).select().single();
+        if (error) throw error;
+        toast.success('Student updated successfully');
+      } else {
+        const result = await provisionManagedUser('student', payload);
+        toast.success('Student account created', {
+          description: `Student ID: ${result.loginId} · Default password: 123456`,
+        });
+      }
       setDialogOpen(false);
       resetForm();
+      await fetchData();
+    } catch (err: any) {
+      toast.error(err?.message ?? 'Could not save the student.');
     }
     setSaving(false);
   };
