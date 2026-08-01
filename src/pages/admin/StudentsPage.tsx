@@ -8,7 +8,8 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
+import { provisionManagedUser } from '@/lib/managedAuth';
 import { Plus, Pencil, Trash2, Loader2, Search, Download, Eye, ChevronLeft, ChevronRight } from 'lucide-react';
 import { exportToCSV } from '@/lib/csvExport';
 import { Separator } from '@/components/ui/separator';
@@ -69,7 +70,6 @@ export default function StudentsPage() {
   const [saving, setSaving] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterClass, setFilterClass] = useState('all');
-  const { toast } = useToast();
 
   const fetchData = async () => {
     setLoading(true);
@@ -79,7 +79,7 @@ export default function StudentsPage() {
       .order('created_at', { ascending: false });
 
     if (error) {
-      toast({ title: 'Error', description: error.message, variant: 'destructive' });
+      toast.error(error.message);
       setStudents([]);
     } else {
       setStudents(data ?? []);
@@ -179,41 +179,28 @@ export default function StudentsPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.full_name.trim() || !form.current_class) {
-      toast({ title: 'Missing required fields', description: 'Full Name and Applied Class are required.', variant: 'destructive' });
+      toast.error('Full Name and Applied Class are required.');
       return;
     }
     setSaving(true);
     const payload = buildPayload();
 
-    let error;
-    let saved: any = null;
-    let createdLoginId: string | null = null;
-
-    if (editId) {
-      const res = await supabase.from('students').update(payload).eq('id', editId).select().single();
-      error = res.error;
-      saved = res.data;
-    } else {
-      const res = await supabase.functions.invoke('provision-managed-user', {
-        body: { type: 'student', payload },
-      });
-      error = res.error ?? (res.data?.error ? { message: res.data.error } : null);
-      saved = res.data?.record;
-      createdLoginId = res.data?.loginId ?? null;
-    }
-
-    if (error) {
-      toast({ title: 'Error', description: error.message, variant: 'destructive' });
-    } else {
-      setStudents((current) =>
-        editId ? current.map((s) => (s.id === saved.id ? saved : s)) : [saved, ...current]
-      );
-      toast({
-        title: editId ? 'Student updated!' : 'Student account created!',
-        description: editId ? undefined : `Student ID: ${createdLoginId} · Default password: 123456`,
-      });
+    try {
+      if (editId) {
+        const { error } = await supabase.from('students').update(payload as never).eq('id', editId).select().single();
+        if (error) throw error;
+        toast.success('Student updated successfully');
+      } else {
+        const result = await provisionManagedUser('student', payload);
+        toast.success('Student account created', {
+          description: `Student ID: ${result.loginId} · Default password: 123456`,
+        });
+      }
       setDialogOpen(false);
       resetForm();
+      await fetchData();
+    } catch (err: any) {
+      toast.error(err?.message ?? 'Could not save the student.');
     }
     setSaving(false);
   };
@@ -239,10 +226,10 @@ export default function StudentsPage() {
   const handleDelete = async (id: string) => {
     const { error } = await supabase.from('students').delete().eq('id', id);
     if (error) {
-      toast({ title: 'Error', description: error.message, variant: 'destructive' });
+      toast.error(error.message);
     } else {
       setStudents((current) => current.filter((s) => s.id !== id));
-      toast({ title: 'Student deleted' });
+      toast.success('Student deleted');
     }
   };
 

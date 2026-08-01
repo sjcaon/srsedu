@@ -51,7 +51,7 @@ Deno.serve(async (req) => {
     } = await adminClient.auth.getUser(token);
 
     if (userError || !user) {
-      return json({ error: 'Unauthorized request.' }, 401);
+      return json({ error: 'Your session is no longer valid. Please sign in again as admin.' }, 401);
     }
 
     const { data: adminRole, error: roleError } = await adminClient
@@ -61,7 +61,11 @@ Deno.serve(async (req) => {
       .eq('role', 'admin')
       .maybeSingle();
 
-    if (roleError || !adminRole) {
+    if (roleError) {
+      return json({ error: `Could not verify your admin role: ${roleError.message}` }, 500);
+    }
+
+    if (!adminRole) {
       return json({ error: 'Only admins can create managed accounts.' }, 403);
     }
 
@@ -81,31 +85,58 @@ Deno.serve(async (req) => {
     const table = type === 'student' ? 'students' : 'teachers';
     const loginIdLabel = type === 'student' ? 'student_id' : 'teacher_id';
 
-    const { data: loginId, error: idError } = await adminClient.rpc(idRpc);
-    if (idError || !loginId) {
-      return json({ error: idError?.message ?? 'Unable to generate a login ID.' }, 500);
+    // Generating the ID and the auth account can race with a parallel create,
+    // so retry a few times when the generated ID / dummy email is already taken.
+    let loginId: string | null = null;
+    let authUser: { user: { id: string } } | null = null;
+    let lastError = 'Unable to create the auth account.';
+
+    for (let attempt = 0; attempt < 5; attempt++) {
+      const { data: generatedId, error: idError } = await adminClient.rpc(idRpc);
+      if (idError || !generatedId) {
+        return json({ error: idError?.message ?? 'Unable to generate a login ID.' }, 500);
+      }
+
+      const candidateId = String(generatedId).trim();
+      const managedEmail = `${candidateId.toLowerCase()}@${DUMMY_DOMAIN}`;
+
+      const { data: created, error: authError } = await adminClient.auth.admin.createUser({
+        email: managedEmail,
+        password: DEFAULT_PASSWORD,
+        email_confirm: true,
+        user_metadata: {
+          full_name: fullName,
+          managed_login_id: candidateId,
+          managed_account_type: type,
+        },
+      });
+
+      if (!authError && created?.user) {
+        loginId = candidateId;
+        authUser = created as { user: { id: string } };
+        break;
+      }
+
+      lastError = authError?.message ?? lastError;
+      if (!/already|exists|registered|duplicate/i.test(lastError)) break;
     }
 
-    const managedEmail = `${String(loginId).trim().toLowerCase()}@${DUMMY_DOMAIN}`;
-
-    const { data: authUser, error: authError } = await adminClient.auth.admin.createUser({
-      email: managedEmail,
-      password: DEFAULT_PASSWORD,
-      email_confirm: true,
-      user_metadata: {
-        full_name: fullName,
-        managed_login_id: loginId,
-        managed_account_type: type,
-      },
-    });
-
-    if (authError || !authUser.user) {
-      return json({ error: authError?.message ?? 'Unable to create the auth account.' }, 500);
+    if (!authUser || !loginId) {
+      return json({ error: lastError }, 500);
     }
 
     try {
+      // Never let the client set identity columns, and drop undefined values so
+      // the insert always matches the real table columns.
+      const cleanPayload: Record<string, unknown> = {};
+      for (const [key, value] of Object.entries(payload ?? {})) {
+        if (value === undefined) continue;
+        if (['id', 'user_id', 'is_first_login', 'roll_number', 'nid', 'created_at'].includes(key)) continue;
+        cleanPayload[key] = value;
+      }
+
       const recordPayload = {
-        ...payload,
+        ...cleanPayload,
         user_id: authUser.user.id,
         [idField]: loginId,
         is_first_login: true,

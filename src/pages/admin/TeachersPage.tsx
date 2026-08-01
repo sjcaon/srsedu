@@ -10,7 +10,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
+import { provisionManagedUser } from '@/lib/managedAuth';
 import { Plus, Pencil, Trash2, Loader2, Eye, ChevronLeft, ChevronRight, X, Search } from 'lucide-react';
 import { WizardNav, SectionGrid } from '@/components/forms/FormWizard';
 import { FileUploadField, MultiFileUploadField } from '@/components/forms/FileUploadField';
@@ -80,13 +81,12 @@ export default function TeachersPage() {
   const [viewTeacher, setViewTeacher] = useState<any | null>(null);
   const [saving, setSaving] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const { toast } = useToast();
 
   const fetchTeachers = async () => {
     setLoading(true);
     const { data, error } = await supabase.from('teachers').select('*').order('created_at', { ascending: false });
     if (error) {
-      toast({ title: 'Error', description: error.message, variant: 'destructive' });
+      toast.error(error.message);
       setTeachers([]);
     } else {
       setTeachers(data ?? []);
@@ -173,45 +173,28 @@ export default function TeachersPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.full_name.trim() || !form.mobile.trim()) {
-      toast({ title: 'Missing required fields', description: 'Full Name and Mobile are required.', variant: 'destructive' });
+      toast.error('Full Name and Mobile are required.');
       return;
     }
     setSaving(true);
     const payload = buildPayload();
 
-    let error;
-    let savedTeacher: any = null;
-    let createdLoginId: string | null = null;
-
-    if (editId) {
-      const response = await supabase.from('teachers').update(payload).eq('id', editId).select().single();
-      error = response.error;
-      savedTeacher = response.data;
-    } else {
-      const response = await supabase.functions.invoke('provision-managed-user', {
-        body: { type: 'teacher', payload },
-      });
-      error = response.error ?? (response.data?.error ? { message: response.data.error } : null);
-      savedTeacher = response.data?.record;
-      createdLoginId = response.data?.loginId ?? null;
-    }
-
-    if (error) {
-      toast({ title: 'Error', description: error.message, variant: 'destructive' });
-    } else {
-      if (savedTeacher) {
-        setTeachers((current) =>
-          editId
-            ? current.map((teacher) => (teacher.id === savedTeacher.id ? savedTeacher : teacher))
-            : [savedTeacher, ...current]
-        );
+    try {
+      if (editId) {
+        const { error } = await supabase.from('teachers').update(payload as never).eq('id', editId).select().single();
+        if (error) throw error;
+        toast.success('Teacher updated successfully');
+      } else {
+        const result = await provisionManagedUser('teacher', payload);
+        toast.success('Teacher account created', {
+          description: `Teacher ID: ${result.loginId} · Default password: 123456`,
+        });
       }
-      toast({
-        title: editId ? 'Teacher updated!' : 'Teacher account created!',
-        description: editId ? undefined : `Teacher ID: ${createdLoginId} · Default password: 123456`,
-      });
       setDialogOpen(false);
       resetForm();
+      await fetchTeachers();
+    } catch (err: any) {
+      toast.error(err?.message ?? 'Could not save the teacher.');
     }
     setSaving(false);
   };
@@ -248,10 +231,10 @@ export default function TeachersPage() {
   const handleDelete = async (id: string) => {
     const { error } = await supabase.from('teachers').delete().eq('id', id);
     if (error) {
-      toast({ title: 'Error', description: error.message, variant: 'destructive' });
+      toast.error(error.message);
     } else {
       setTeachers((current) => current.filter((teacher) => teacher.id !== id));
-      toast({ title: 'Teacher deleted' });
+      toast.success('Teacher deleted');
     }
   };
 
